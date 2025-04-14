@@ -1,50 +1,57 @@
-import fs from 'fs';
+import { promises as fs } from 'fs';
 const path = './src/carts.json';
 
 class CartManager {
     constructor() {
-        this.carts = this.loadCarts();
+        this.carts = [];
+        this.init();
     }
 
-    
-    loadCarts() {
+    async init() {
+        await this.loadCarts();
+    }
+
+    async loadCarts() {
         try {
-            const data = fs.readFileSync(path, 'utf8');
-            return JSON.parse(data);
+            const data = await fs.readFile(path, 'utf8');
+            this.carts = JSON.parse(data);
         } catch (error) {
-            return [];
+            this.carts = [];
         }
     }
 
-    
-    saveCarts() {
-        fs.writeFileSync(path, JSON.stringify(this.carts, null, 2));
+    async saveCarts() {
+        try {
+            await fs.writeFile(path, JSON.stringify(this.carts, null, 2));
+        } catch (error) {
+            console.error("Error al guardar los carritos:", error);
+        }
     }
 
-    
-    createCart() {
-        const newCart = { id: Date.now().toString(), products: [] };
+    async createCart() {
+        const newCart = {
+            id: Date.now().toString(),
+            products: []
+        };
         this.carts.push(newCart);
-        this.saveCarts();
+        await this.saveCarts();
         return newCart;
     }
 
-
-    getCartById(id) {
+    async getCartById(id) {
         return this.carts.find(cart => cart.id === id);
     }
 
-
-    addProductToCart(cartId, productId, quantity) {
-        const cart = this.getCartById(cartId);
+    async addProductToCart(cartId, productId, quantity) {
+        const cart = await this.getCartById(cartId);
         if (cart) {
-            const productIndex = cart.products.findIndex(product => product.product === productId);
+            const productIndex = cart.products.findIndex(p => p.product === productId);
             if (productIndex !== -1) {
                 cart.products[productIndex].quantity += quantity;
             } else {
                 cart.products.push({ product: productId, quantity });
             }
-            this.saveCarts();
+            await this.saveCarts();
             return cart;
         }
         return null;
