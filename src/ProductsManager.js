@@ -1,50 +1,80 @@
-import fs from 'fs';
-const path = 'products.json';
+import { promises as fs } from 'fs';
 
 class ProductManager {
-static async getProducts() {
-    try {
-    const data = await fs.promises.readFile(path, 'utf-8');
-    return JSON.parse(data);
-    } catch (error) {
-    return [];
+    constructor(path) {
+        this.path = path; 
+        this.products = [];
+        this.loadProducts(); 
     }
-}
 
-static async getProductById(id) {
-    const products = await this.getProducts();
-    return products.find(product => product.id === id);
-}
-
-static async addProduct(product) {
-    const products = await this.getProducts();
-    const newProduct = { id: Date.now().toString(), ...product };
-    products.push(newProduct);
-    await fs.promises.writeFile(path, JSON.stringify(products, null, 2));
-    return newProduct;
-}
-
-static async updateProduct(id, updatedProduct) {
-    let products = await this.getProducts();
-    const productIndex = products.findIndex(product => product.id === id);
-    if (productIndex !== -1) {
-    products[productIndex] = { ...products[productIndex], ...updatedProduct };
-    await fs.promises.writeFile(path, JSON.stringify(products, null, 2));
-    return products[productIndex];
+    
+    async loadProducts() {
+        try {
+            const data = await fs.readFile(this.path, 'utf-8');
+            this.products = JSON.parse(data);
+        } catch (error) {
+            this.products = []; 
+        }
     }
-    return null;
-}
 
-static async deleteProduct(id) {
-    let products = await this.getProducts();
-    const productIndex = products.findIndex(product => product.id === id);
-    if (productIndex !== -1) {
-    products.splice(productIndex, 1);
-    await fs.promises.writeFile(path, JSON.stringify(products, null, 2));
-    return true;
+    
+    async saveProducts() {
+        try {
+            await fs.writeFile(this.path, JSON.stringify(this.products, null, 2));
+        } catch (error) {
+            console.error("Error al guardar productos:", error);
+        }
     }
-    return false;
-}
+
+    
+    async addProduct({ title, description, code, price, status, stock, category, thumbnails }) {
+        const newProduct = {
+            id: Date.now().toString(), 
+            title,
+            description,
+            code,
+            price,
+            status,
+            stock,
+            category,
+            thumbnails
+        };
+        this.products.push(newProduct);
+        await this.saveProducts();
+        return newProduct;
+    }
+
+    
+    async getProducts() {
+        return this.products;
+    }
+
+    
+    async getProductById(id) {
+        return this.products.find(product => product.id === id);
+    }
+
+    
+    async updateProduct(id, updatedProduct) {
+        const product = this.products.find(product => product.id === id);
+        if (product) {
+            Object.assign(product, updatedProduct); 
+            await this.saveProducts();
+            return product;
+        }
+        return null; 
+    }
+
+    
+    async deleteProduct(id) {
+        const index = this.products.findIndex(product => product.id === id);
+        if (index !== -1) {
+            this.products.splice(index, 1); 
+            await this.saveProducts();
+            return true; 
+        }
+        return false; 
+    }
 }
 
 export default ProductManager;
