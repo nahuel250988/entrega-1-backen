@@ -1,0 +1,46 @@
+<h1>Carrito de Compras</h1>
+
+{{#if cart.products.length}}
+<ul>
+    {{#each cart.products}}
+    <li>
+        <img src="{{this.thumbnail}}" alt="{{this.title}}">
+        <p>{{this.title}} - ${{this.price}}</p>
+        <p>Cantidad: {{this.quantity}}</p>
+        <button onclick="removeProductFromCart('{{this._id}}')">Eliminar</button>
+    </li>
+    {{/each}}
+</ul>
+<p><strong>Total:</strong> ${{cart.total}}</p>
+<button onclick="clearCart()">Vaciar carrito</button>
+{{else}}
+<p>Tu carrito está vacío.</p>
+{{/if}}
+
+<script>
+function removeProductFromCart(productId) {
+    fetch(`/api/carts/${cartId}/products/${productId}`, { method: 'DELETE' })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+        alert('Producto eliminado');
+        location.reload();
+        } else {
+        alert('Error al eliminar el producto');
+        }
+    });
+}
+
+function clearCart() {
+    fetch(`/api/carts/${cartId}`, { method: 'DELETE' })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+        alert('Carrito vaciado');
+        location.reload();
+        } else {
+        alert('Error al vaciar el carrito');
+        }
+    });
+}
+</script>
